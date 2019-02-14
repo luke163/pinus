@@ -7,7 +7,8 @@ let argv = yargs.argv;
 console.log('启动robotAgent');
 
 let config = {
-    master: {host: argv.host, port: argv.port, interval: argv.interval}
+    master: {host: argv.host, port: argv.port, interval: argv.interval},
+    params: argv.params ? JSON.parse(argv.params) : null
 } as RobotCfg;
 
 let robot = new Robot(config);

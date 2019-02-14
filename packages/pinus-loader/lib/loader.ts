@@ -94,6 +94,40 @@ export function loadPath(path: string, context: any, reload: boolean, createInst
     return res;
 }
 
+export function loadPrototype (path: string, pathType: LoaderPathType) {
+    let files = fs.readdirSync(path);
+    if (files.length === 0) {
+        console.warn('path is empty, path:' + path);
+        return;
+    }
+
+    if (path.charAt(path.length - 1) !== '/') {
+        path += '/';
+    }
+
+    let fp, fn, m, res: {[key: string]: any} = {};
+    for (let i = 0, l = files.length; i < l; i++) {
+        fn = files[i];
+        fp = path + fn;
+        if (!isFile(fp) || !checkFileType(fn, '.js')) {
+            // only load js file type
+            continue;
+        }
+
+        fn = getFileName(fn, '.js'.length);
+        m = loadFile(fp, false);
+        if (!m) {
+            continue;
+        }
+        for (let key in m) {
+            let cls = m[key];
+            res[key] = cls;
+            res[key].fname = fn;
+        }
+    }
+
+    return res;
+}
 /**
  * Check file suffix
 
@@ -116,20 +150,20 @@ export function checkFileType(fn: string, suffix: string) {
 
 export function isFile(path: string) {
     return fs.statSync(path).isFile();
-};
+}
 
 export function isDir(path: string) {
     return fs.statSync(path).isDirectory();
-};
+}
 
-let getFileName = function (fp: string, suffixLength: number) {
+export function getFileName(fp: string, suffixLength: number) {
     let fn = path.basename(fp);
     if (fn.length > suffixLength) {
         return fn.substring(0, fn.length - suffixLength);
     }
 
     return fn;
-};
+}
 
 let requireUncached = function (module: string) {
     if (isUseContainer()) {

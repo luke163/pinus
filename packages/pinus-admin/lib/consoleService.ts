@@ -385,11 +385,10 @@ let addToSchedule = function (service: ConsoleService, record: ModuleRecord) {
         record.jobId = schedule.scheduleJob({
             start: Date.now() + record.delay,
             period: record.interval
-        },
-            doScheduleJob, {
-                service: service,
-                record: record
-            });
+        }, doScheduleJob, {
+            service: service,
+            record: record
+        });
     }
 };
 

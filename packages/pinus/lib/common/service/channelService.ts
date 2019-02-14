@@ -1,7 +1,8 @@
 import * as countDownLatch from '../../util/countDownLatch';
 import * as utils from '../../util/utils';
 import { ChannelRemote } from '../remote/frontend/channelRemote';
-import { getLogger } from 'pinus-logger'; import { Application } from '../../application';
+import { getLogger } from 'pinus-logger';
+import { Application } from '../../application';
 import { IComponent } from '../../interfaces/IComponent';
 import { IStore } from '../../interfaces/IStore';
 import { IHandlerFilter } from '../../interfaces/IHandlerFilter';
@@ -206,7 +207,11 @@ export class ChannelService implements IComponent {
         let sendMessage = function (serverId: string) {
             return (function () {
                 if (serverId === app.serverId) {
-                    (self.channelRemote as any)[method](route, msg, opts, genCB());
+                    (self.channelRemote as any)[method](route, msg, opts).then(() => {
+						genCB(serverId)(null);
+					}).catch((err: any) => {
+						genCB(serverId)(err);
+					});
                 } else {
                     app.rpcInvoke(serverId, {
                         namespace: namespace, service: service,
@@ -478,7 +483,11 @@ let sendMessageByGroup = function (channelService: ChannelService, route: string
     let sendMessage = function (sid: FRONTENDID) {
         return (function () {
             if (sid === app.serverId) {
-                (channelService.channelRemote as any)[method](route, msg, groups[sid], opts, rpcCB(sid));
+                (channelService.channelRemote as any)[method](route, msg, groups[sid], opts).then((fails: SID[]) => {
+                    rpcCB(sid)(null, fails);
+                }, (err: Error) => {
+                    rpcCB(sid)(err, null);
+                });
             } else {
                 app.rpcInvoke(sid, {
                     namespace: namespace, service: service,

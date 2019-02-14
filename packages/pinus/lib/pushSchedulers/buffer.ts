@@ -12,7 +12,7 @@ export interface BufferPushSchedulerOptions {
 export class BufferPushScheduler {
     app: Application;
     flushInterval: number;
-    sessions: { [sid: number]: Session[] } = {};   // sid -> msg queue
+    sessions: { [sid: number]: any[] } = {};   // sid -> msg queue
     tid: NodeJS.Timer = null;
 
     constructor(app: Application, opts?: BufferPushSchedulerOptions) {

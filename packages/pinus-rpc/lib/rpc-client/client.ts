@@ -411,15 +411,11 @@ export class RpcClient {
             return;
         }
         let res: { [key: string]: any }, name;
-        let modules: { [key: string]: any } = Loader.load(record.path, context, false, false, LoaderPathType.PINUS_REMOTER);
+        let modules: { [key: string]: any } = Loader.loadPrototype(record.path, LoaderPathType.PINUS_REMOTER);
         if (modules) {
             res = {};
             for (name in modules) {
-                res[name] = this.genObjectProxy(
-                    name,
-                    modules[name],
-                    record
-                );
+                res[modules[name].fname] = this.genObjectProxy(modules[name].fname, modules[name], record);
             }
         }
         return res;
@@ -458,12 +454,10 @@ export class RpcClient {
     private genFunctionProxy(serviceName: string, methodName: string, origin: any, attach: RemoteServerCode) {
         let self = this;
         return (function (): Proxy {
-
             // 兼容旧的api
             let proxy: any = function () {
                 let len = arguments.length;
                 if (len < 1) {
-
                     logger.error('[pinus-rpc] invalid rpc invoke, arguments length less than 1, namespace: %j, serverType, %j, serviceName: %j, methodName: %j',
                         attach.namespace, attach.serverType, serviceName, methodName);
                     return Promise.reject(new Error('[pinus-rpc] invalid rpc invoke, arguments length less than 1'));
@@ -491,12 +485,12 @@ export class RpcClient {
             };
             // 新的api，广播出去
             proxy.broadcast = function (...args: any[]) {
-                    return self.rpcToSpecifiedServer('*', serviceName, methodName, args, attach);
-                };
+                return self.rpcToSpecifiedServer('*', serviceName, methodName, args, attach);
+            };
             // 新的api，使用默认路由调用
             proxy.defaultRoute = function (...args: any[]) {
-                    return self.rpcToRoute(null, serviceName, methodName, args, attach);
-                };
+                return self.rpcToRoute(null, serviceName, methodName, args, attach);
+            };
 
             // 兼容旧的api
             proxy.toServer = function () {
@@ -626,6 +620,3 @@ export function createClient(opts: RpcClientOpts) {
 // module.exports.WSMailbox from ('./mailboxes/ws-mailbox'); // socket.io
 // module.exports.WS2Mailbox from ('./mailboxes/ws2-mailbox'); // ws
 // export { create as MQTTMailbox } from './mailboxes/mqtt-mailbox'; // mqtt
-
-
-

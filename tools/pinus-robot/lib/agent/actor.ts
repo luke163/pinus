@@ -18,19 +18,20 @@ export interface IActor {
 export class Actor extends EventEmitter implements IActor {
   id: number;
   script: string;
+  params: any;
+  body: any;
   log: Logger = logging;
   constructor(conf: AgentCfg, aid: number) {
     super();
     this.id = aid;
-    if (conf.script) {
-      this.script = conf.script;
-    }
-    else {
+    this.script = conf.script;
+    this.params = conf.params;
+    if (!this.script) {
      if(path.isAbsolute(conf.scriptFile)) {
-      this.script = `require("${conf.scriptFile}").default(actor);`;
+      this.script = conf.scriptFile;
      }
      else {
-      this.script = `require("${path.join(process.cwd() , conf.scriptFile)}").default(actor);`;
+      this.script = `${path.join(process.cwd() , conf.scriptFile)}`;
      }
     }
     console.log('runScript ' , this.script);
@@ -51,19 +52,22 @@ export class Actor extends EventEmitter implements IActor {
 
   run() {
     try {
-      let initSandbox = {
-        console: console,
-        require: require,
-        actor: this,
-        setTimeout: setTimeout,
-        clearTimeout: clearTimeout,
-        setInterval: setInterval,
-        clearInterval: clearInterval,
-        global: global,
-        process: process
-      };
-      let context = vm.createContext(initSandbox);
-      vm.runInContext(this.script, context);
+      // let initSandbox = {
+      //   console: console,
+      //   require: require,
+      //   actor: this,
+      //   setTimeout: setTimeout,
+      //   clearTimeout: clearTimeout,
+      //   setInterval: setInterval,
+      //   clearInterval: clearInterval,
+      //   global: global,
+      //   process: process
+      // };
+      // let context = vm.createContext(initSandbox);
+      // vm.runInContext(this.script, context);
+
+      let m = require(this.script);
+      this.body = m.default(this);
     } catch (ex) {
       this.emit('error', ex.stack);
     }
@@ -132,4 +136,3 @@ export class Actor extends EventEmitter implements IActor {
    *
    */
 }
-

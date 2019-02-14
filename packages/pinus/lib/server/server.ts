@@ -374,23 +374,24 @@ let doForward = function (app: Application, msg: any, session: FrontendOrBackend
     let finished = false;
     // should route to other servers
     try {
+        // app.sysrpc[routeRecord.serverType].msgRemote.forwardMessage2(
+        //     msg.oldRoute || msg.route,
+        //     msg.body,
+        //     msg.aesPassword,
+        //     msg.compressGzip,
+        //     session.export()
+        // ).then(
         app.sysrpc[routeRecord.serverType].msgRemote.forwardMessage(
-            // app.sysrpc[routeRecord.serverType].msgRemote.forwardMessage2(
             session,
             msg,
-            // msg.oldRoute || msg.route,
-            // msg.body,
-            // msg.aesPassword,
-            // msg.compressGzip,
             session.export()
-        ).then(
-            function (resp: any) {
-                finished = true;
-                utils.invokeCallback(cb, null, resp);
-            }).catch(function (err: Error) {
-                logger.error(app.serverId + ' fail to process remote message:' + err.stack);
-                utils.invokeCallback(cb, err);
-            });
+        ).then(function (resp: any) {
+            finished = true;
+            utils.invokeCallback(cb, null, resp);
+        }).catch(function (err: Error) {
+            logger.error(app.serverId + ' fail to process remote message:' + err.stack);
+            utils.invokeCallback(cb, err);
+        });
     }
     catch (err) {
         if (!finished) {

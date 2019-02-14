@@ -7,7 +7,7 @@
 export function encodeUInt32(num: any) {
     let n = parseInt(num);
     if (isNaN(n) || n < 0) {
-        console.log(n);
+        console.warn('encodeUInt32 error n:', n, 'origin:', num);
         return null;
     }
 
@@ -34,6 +34,7 @@ export function encodeUInt32(num: any) {
 export function encodeSInt32(num: any) {
     let n = parseInt(num);
     if (isNaN(n)) {
+        console.warn('encodeSInt32 error n:', n, 'origin:', num);
         return null;
     }
     n = n < 0 ? (Math.abs(n) * 2 - 1) : n * 2;

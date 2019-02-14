@@ -145,37 +145,36 @@ export class ConnectorComponent implements IComponent {
     }
 
     sendAsync(reqId: number, route: string, msg: any, recvs: SID[], opts: ScheduleOptions, cb: (err?: Error, resp ?: any) => void) {
-        let emsg = msg;
-        let self = this;
-
-        /*
-        if (this.encode)
-        {
-            // use costumized encode
-            this.encode(reqId, route, msg, function (err, encodeMsg)
-            {
-                if (err)
-                {
-                    return cb(err);
-                }
-
-                emsg = encodeMsg;
-                self.doSend(reqId, route, emsg, recvs, opts, cb);
-            });
-        } else if (this.connector.encode)
-        {
-            // use connector default encode
-            this.connector.encode(reqId, route, msg, function (err, encodeMsg)
-            {
-                if (err)
-                {
-                    return cb(err);
-                }
-
-                emsg = encodeMsg;
-                self.doSend(reqId, route, emsg, recvs, opts, cb);
-            });
-        }*/
+        // let emsg = msg;
+        // let self = this;
+        //
+        // if (this.encode)
+        // {
+        //     // use costumized encode
+        //     this.encode(reqId, route, msg, function (err, encodeMsg)
+        //     {
+        //         if (err)
+        //         {
+        //             return cb(err);
+        //         }
+        //
+        //         emsg = encodeMsg;
+        //         self.doSend(reqId, route, emsg, recvs, opts, cb);
+        //     });
+        // } else if (this.connector.encode)
+        // {
+        //     // use connector default encode
+        //     this.connector.encode(reqId, route, msg, function (err, encodeMsg)
+        //     {
+        //         if (err)
+        //         {
+        //             return cb(err);
+        //         }
+        //
+        //         emsg = encodeMsg;
+        //         self.doSend(reqId, route, emsg, recvs, opts, cb);
+        //     });
+        // }
         throw new Error('not implement sendAsync');
     }
 
@@ -186,8 +185,7 @@ export class ConnectorComponent implements IComponent {
             });
         }
 
-        this.app.components.__pushScheduler__.schedule(reqId, route, emsg,
-            recvs, opts, cb);
+        this.app.components.__pushScheduler__.schedule(reqId, route, emsg, recvs, opts, cb);
     }
 
     setPubKey(id: number, key: {rsa_n: string , rsa_e: string}) {
@@ -316,52 +314,51 @@ export class ConnectorComponent implements IComponent {
     }
 
     handleMessageAsync(msg: any, session: Session, socket: ISocket) {
-        /*
-        if (this.decode)
-        {
-            this.decode(msg, session, function (err, dmsg)
-            {
-                if (err)
-                {
-                    logger.error('fail to decode message from client %s .', err.stack);
-                    return;
-                }
-
-                doHandleMessage(this, dmsg, session);
-            });
-        } else if (this.connector.decode)
-        {
-            this.connector.decode(msg, socket, function (err, dmsg)
-            {
-                if (err)
-                {
-                    logger.error('fail to decode message from client %s .', err.stack);
-                    return;
-                }
-
-                doHandleMessage(this, dmsg, session);
-            });
-        }*/
+        // if (this.decode)
+        // {
+        //     this.decode(msg, session, function (err, dmsg)
+        //     {
+        //         if (err)
+        //         {
+        //             logger.error('fail to decode message from client %s .', err.stack);
+        //             return;
+        //         }
+        //
+        //         doHandleMessage(this, dmsg, session);
+        //     });
+        // } else if (this.connector.decode)
+        // {
+        //     this.connector.decode(msg, socket, function (err, dmsg)
+        //     {
+        //         if (err)
+        //         {
+        //             logger.error('fail to decode message from client %s .', err.stack);
+        //             return;
+        //         }
+        //
+        //         doHandleMessage(this, dmsg, session);
+        //     });
+        // }
         throw new Error('not implement handleMessageAsync');
     }
 
-    doHandleMessage(dmsg: any, session: Session) {
-        if (!dmsg) {
-            // discard invalid message
-            return;
-        }
-
-        // use rsa crypto
-        if (this.useCrypto) {
-            let verified = this.verifyMessage(session, dmsg);
-            if (!verified) {
-                logger.error('fail to verify the data received from client.');
-                return;
-            }
-        }
-
-        this.handleMessage(session, dmsg);
-    }
+    // doHandleMessage(dmsg: any, session: Session) {
+    //     if (!dmsg) {
+    //         // discard invalid message
+    //         return;
+    //     }
+    //
+    //     // use rsa crypto
+    //     if (this.useCrypto) {
+    //         let verified = this.verifyMessage(session, dmsg);
+    //         if (!verified) {
+    //             logger.error('fail to verify the data received from client.');
+    //             return;
+    //         }
+    //     }
+    //
+    //     this.handleMessage(session, dmsg);
+    // }
 
     /**
      * get session for current connection
@@ -382,7 +379,7 @@ export class ConnectorComponent implements IComponent {
         socket.on('error', session.closed.bind(session));
         session.on('closed', this.onSessionClose.bind(this, app));
         session.on('bind',  (uid) => {
-            logger.debug('session on [%s] bind with uid: %s', this.app.serverId, uid);
+            logger.debug('session[%d] on [%s] bind with uid: %s', socket.id, this.app.serverId, uid);
             // update connection statistics if necessary
             if (this.connection) {
                 this.connection.addLoginedUser(uid, {
@@ -422,7 +419,7 @@ export class ConnectorComponent implements IComponent {
                 return;
             }
             if (!msg.id && !resp) return;
-            if (!resp) resp = {};
+            // if (!resp) resp = {};
             if (!!err && !resp.code) {
                 resp.code = 500;
             }
@@ -430,8 +427,9 @@ export class ConnectorComponent implements IComponent {
                 type: 'response'
             };
 
-            this.send(msg.id, msg.route, resp, [session.id], opts,
-                function () { });
+            if (resp !== null && resp !== undefined) {
+                this.send(msg.id, msg.route, resp, [session.id], opts, function () { });
+            }
         });
     }
 

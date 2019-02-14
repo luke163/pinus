@@ -4,7 +4,7 @@ preload();
 import {createServer, createTcpAcceptor} from '../index';
 import { configure } from 'pinus-logger';
 import {getLogger} from 'pinus-logger';
-configure('./config/log4js.json');
+// configure('./config/log4js.json');
 let logger = getLogger('pinus-rpc', 'sample-server');
 
 // remote service path info list

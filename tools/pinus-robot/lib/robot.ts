@@ -6,6 +6,7 @@ import * as util  from './common/util';
 export interface RobotCfg {
   clients ?: Array<string>;
   master ?: {host: string, port: number, interval: number, webport: number};
+  params ?: any;
   scriptFile: string;
 }
 /**
@@ -38,7 +39,7 @@ export class Robot {
     conf.mainFile = mainFile;
     this.master = new Server(conf);
     this.master.listen(this.conf.master.port);
-    HTTP_SERVER.start(`http://${this.conf.master.host}:${this.conf.master.port}` , this.conf.master.webport);
+    HTTP_SERVER.start(`http://${this.conf.master.host}:${this.conf.master.port}` , this.conf.master.webport, this.conf.master.host);
   }
 
   /**
@@ -51,6 +52,7 @@ export class Robot {
     let conf = {} as AgentCfg;
     conf.master = this.conf.master;
     conf.scriptFile = scriptFile;
+    conf.params = this.conf.params;
     this.agent = new Agent(conf);
     this.agent.start();
   }
@@ -61,4 +63,3 @@ export class Robot {
     }
   }
 }
-

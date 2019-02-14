@@ -72,7 +72,7 @@ export class Dispatcher extends EventEmitter {
         promise.then(function (value: string) {
             cb(null, value);
         }, function (reason: Error) {
-                cb(reason);
-            });
+            cb(reason);
+        });
     }
 }

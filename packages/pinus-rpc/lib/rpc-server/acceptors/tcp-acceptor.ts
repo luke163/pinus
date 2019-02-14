@@ -264,7 +264,7 @@ export class TCPAcceptor extends EventEmitter implements IAcceptor {
             if (!queue.length) {
                 continue;
             }
-            socket.write(socket.composer.compose(JSON.stringify(queue)));
+            socket.write(socket.composer.compose(RES_TYPE, JSON.stringify(queue)));
             queues[socketId] = [];
         }
     }

@@ -503,7 +503,7 @@ export class Application {
                     if (err) {
                         utils.invokeCallback(cb, err);
                     } else {
-                        logger.info('%j enter after start...', self.getServerId());
+                        logger.info('%j enter start...', self.getServerId());
 
                         appUtil.optComponents(self.loaded, Constants.RESERVED.START, function (err) {
                             self.state = STATE_START;
@@ -570,7 +570,7 @@ export class Application {
 
         this.stopTimer = setTimeout(function () {
             process.exit(0);
-        }, Constants.TIME.TIME_WAIT_STOP);
+        }, Constants.TIME.TIME_WAIT_STOP * 20);
 
         let cancelShutDownTimer = function () {
             if (!!self.stopTimer) {
@@ -579,8 +579,8 @@ export class Application {
         };
         let shutDown = function () {
             appUtil.stopComps(self.loaded, 0, force, function () {
-                cancelShutDownTimer();
                 if (force) {
+                    cancelShutDownTimer();
                     process.exit(0);
                 }
             });

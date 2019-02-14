@@ -8,7 +8,7 @@ import * as pinusrpc from '..';
 import {configure} from 'pinus-logger';
 import {getLogger} from 'pinus-logger';
 import {createTcpMailBox} from '../';
-configure('./config/log4js.json');
+// configure('./config/log4js.json');
 let logger = getLogger('pinus-rpc', 'sample-client');
 
 // remote service interface path info list
@@ -80,7 +80,7 @@ client.start(err => {
 async function test() {
     console.log('rpc client start ok.');
 
-    let m: any = new Buffer('hello');
+    let m: any = Buffer.from('hello');
     // n = 'bbb';
     let fs = require('fs');
     // m = fs.readFileSync('./skill.js').toString();

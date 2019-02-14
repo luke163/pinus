@@ -15,6 +15,7 @@ export interface AgentCfg {
     master: {host: string, port: number, interval: number};
     script: string;
     scriptFile: string;
+    params ?: any;
 }
 /**
  *
@@ -104,6 +105,7 @@ export class Agent {
         let conf = {} as AgentCfg;
         conf.master = agent.conf.master;
         conf.scriptFile = agent.conf.scriptFile;
+        conf.params = agent.conf.params;
 
         if (!!script && script.length > 1) {
             conf.script = script;
@@ -192,4 +194,3 @@ export class Agent {
         }
     }
 }
-

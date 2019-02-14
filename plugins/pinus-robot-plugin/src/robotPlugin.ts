@@ -24,7 +24,11 @@ export class RobotPlugin implements IPlugin {
         if(path.sep === '\\') {
             scriptFile = scriptFile.replace(/\\/g , '\\\\');
         }
+        let ppp = "";
+        if (this.conf.params) {
+            ppp = JSON.stringify(this.conf.params);
+        }
         // 启动机器人总管
-        robot.runMaster(`"${__dirname}/robotAgent.js" --host=${this.conf.master.host} --port=${this.conf.master.port} --interval=${this.conf.master.interval} --scriptFile="${scriptFile}"`);
+        robot.runMaster(`"${__dirname}/robotAgent.js" --host=${this.conf.master.host} --port=${this.conf.master.port} --interval=${this.conf.master.interval} --scriptFile="${scriptFile}" --params="${ppp}"`);
     }
 }

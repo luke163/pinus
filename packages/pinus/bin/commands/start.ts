@@ -42,19 +42,19 @@ function start(opts: any) {
         fs.mkdirSync(logDir);
     }
 
-    let ls;
+    let ls, workDir = path.resolve(opts.directory);
     let type = opts.type || constants.RESERVED.ALL;
     let params = [absScript, 'env=' + opts.env, 'type=' + type];
     if (!!opts.id) {
         params.push('startId=' + opts.id);
     }
     if (opts.daemon) {
-        ls = spawn(process.execPath, params, { detached: true, stdio: 'ignore' });
+        ls = spawn(process.execPath, params, { cwd: workDir, detached: true, stdio: 'ignore' });
         ls.unref();
         console.log(DAEMON_INFO);
         process.exit(0);
     } else {
-        ls = spawn(process.execPath, params);
+        ls = spawn(process.execPath, params, { cwd: workDir });
         ls.stdout.on('data', function (data) {
             console.log(data.toString());
         });

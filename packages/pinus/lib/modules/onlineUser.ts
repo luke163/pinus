@@ -13,7 +13,6 @@ let logger = getLogger('pinus', path.basename(__filename));
 
 
 export class OnlineUserModule implements IModule {
-
     static moduleId = 'onlineUser';
 
     app: Application;

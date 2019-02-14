@@ -98,16 +98,15 @@ export class HandlerService {
             handler[method](msg, session).then((resp) => {
                 callback(null, resp);
             }, (reason) => {
-                    callback(reason);
-                });
+                callback(reason);
+            });
         } else {
             msg.push(session);
             handler[method].apply(handler, msg).then((resp: any) => {
                 callback(null, resp);
             }, (reason: any) => {
-
-                    callback(reason);
-                });
+                callback(reason);
+            });
         }
         return;
     }

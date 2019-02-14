@@ -1,7 +1,7 @@
 import * as util from 'util';
 import * as net from 'net';
 import { EventEmitter } from 'events';
-import {default as  handler } from './common/handler';
+import { default as  handler } from './common/handler';
 import { Package} from 'pinus-protocol';
 import { getLogger } from 'pinus-logger';
 import { ISocket } from '../interfaces/ISocket';
@@ -70,7 +70,7 @@ export class HybridSocket extends EventEmitter implements ISocket {
         if (this.state !== ST_WORKING) {
             return;
         }
-        let self = this;
+        // let self = this;
 
         this.socket.send(msg, { binary: true },  (err) => {
             if (!!err) {
@@ -87,9 +87,9 @@ export class HybridSocket extends EventEmitter implements ISocket {
      */
     send(msg: any) {
         if (msg instanceof String) {
-            msg = new Buffer(msg as string);
+            msg = Buffer.from(msg as string);
         } else if (!(msg instanceof Buffer)) {
-            msg = new Buffer(JSON.stringify(msg));
+            msg = Buffer.from(JSON.stringify(msg));
         }
         this.sendRaw(Package.encode(Package.TYPE_DATA, msg));
     }
@@ -100,12 +100,13 @@ export class HybridSocket extends EventEmitter implements ISocket {
      * @param  {Buffer} msgs byte data
      */
     sendBatch(msgs: any[]) {
-        let rs = [];
+        let rs = [], totalen = 0;
         for (let i = 0; i < msgs.length; i++) {
             let src = Package.encode(Package.TYPE_DATA, msgs[i]);
             rs.push(src);
+            totalen += src.length;
         }
-        this.sendRaw(Buffer.concat(rs));
+        this.sendRaw(Buffer.concat(rs, totalen));
     }
 
     /**
