@@ -53,13 +53,13 @@ import { FrontendOrBackendSession, ScheduleOptions, UID, SID, FrontendSession, I
 let logger = getLogger('pinus', path.basename(__filename));
 
 
-export type ConfigureCallback =  () => void;
+export type ConfigureCallback = () => void;
 export type AConfigureFunc1 = () => Promise<void> ;
 export type AConfigureFunc2 = (env: string) => Promise<void> ;
 export type AConfigureFunc3 = (env: string, type: string) => Promise<void>;
 
 export interface ApplicationOptions {
-    base ?: string;
+    base?: string;
 }
 
 export type BeforeStopHookFunction = (app: Application, shutDown: () => void, cancelShutDownTimer: () => void) => void;
@@ -129,19 +129,19 @@ export class Application {
 
     loaded: IComponent[] = [];       // loaded component list
     components: {
-        __backendSession__ ?: BackendSessionComponent,
-        __channel__ ?: ChannelComponent,
-        __connection__ ?: ConnectionComponent,
-        __connector__ ?: ConnectorComponent,
-        __dictionary__ ?: DictionaryComponent,
-        __master__ ?: MasterComponent,
-        __monitor__ ?: MonitorComponent,
-        __protobuf__ ?: ProtobufComponent,
-        __proxy__ ?: ProxyComponent,
-        __remote__ ?: RemoteComponent,
-        __server__ ?: ServerComponent,
-        __session__ ?: SessionComponent,
-        __pushScheduler__ ?: PushSchedulerComponent,
+        __backendSession__?: BackendSessionComponent,
+        __channel__?: ChannelComponent,
+        __connection__?: ConnectionComponent,
+        __connector__?: ConnectorComponent,
+        __dictionary__?: DictionaryComponent,
+        __master__?: MasterComponent,
+        __monitor__?: MonitorComponent,
+        __protobuf__?: ProtobufComponent,
+        __proxy__?: ProxyComponent,
+        __remote__?: RemoteComponent,
+        __server__?: ServerComponent,
+        __session__?: SessionComponent,
+        __pushScheduler__?: PushSchedulerComponent,
         [key: string]: IComponent
     } = {};   // name -> component map
 
@@ -149,7 +149,7 @@ export class Application {
     backendSessionService ?: BackendSessionService;
     channelService ?: ChannelService;
 
-    settings: {[key: string]: any} = {};     // collection keep set/get
+    settings: { [key: string]: any } = {};     // collection keep set/get
     event = new EventEmitter();  // event object to sub/pub events
 
     // current server info
@@ -160,11 +160,11 @@ export class Application {
 
     // global server infos
     master: ServerStartArgs = null;         // master server info
-    servers: {[id: string]: ServerInfo} = {};          // current global server info maps, id -> info
-    serverTypeMaps: {[type: string]: ServerInfo[]}  = {};   // current global type maps, type -> [info]
+    servers: { [id: string]: ServerInfo } = {};          // current global server info maps, id -> info
+    serverTypeMaps: { [type: string]: ServerInfo[] } = {};   // current global type maps, type -> [info]
     serverTypes: string[] = [];      // current global server type list
     usedPlugins: IPlugin[] = [];     // current server custom lifecycle callbacks
-    clusterSeq: {[serverType: string]: number} = {};       // cluster id seqence
+    clusterSeq: { [serverType: string]: number } = {};       // cluster id seqence
     state: number;
     base: string;
 
@@ -229,9 +229,9 @@ export class Application {
             let env = this.get(Constants.RESERVED.ENV);
             let originPath = path.join(base, Constants.FILEPATH.LOG);
             let presentPath = path.join(base, Constants.FILEPATH.CONFIG_DIR, env, path.basename(Constants.FILEPATH.LOG));
-            if (fs.existsSync(originPath)) {
+            if (this._checkCanRequire(originPath)) {
                 logger.configure(originPath, {serverId: serverId, base: base});
-            } else if (fs.existsSync(presentPath)) {
+            } else if (this._checkCanRequire(presentPath)) {
                 logger.configure(presentPath, {serverId: serverId, base: base});
             } else {
                 console.error('logger file path configuration is error.');
@@ -357,7 +357,7 @@ export class Application {
             name = null;
         }
 
-        if(isFunction(component)) {
+        if (isFunction(component)) {
             component = new component(this, opts);
         }
 
@@ -380,6 +380,15 @@ export class Application {
         return component;
     }
 
+    _checkCanRequire(path: string) {
+        try {
+            path = require.resolve(path);
+        } catch (err) {
+            return null;
+        }
+        return path;
+    }
+
     /**
      * Load Configure json file to settings.(support different enviroment directory & compatible for old path)
      *
@@ -395,15 +404,15 @@ export class Application {
         let originPath = path.join(this.getBase(), val);
         let presentPath = path.join(this.getBase(), Constants.FILEPATH.CONFIG_DIR, env, path.basename(val));
         let realPath: string;
-        if (fs.existsSync(originPath)) {
-            realPath = originPath;
+        if (self._checkCanRequire(originPath)) {
+            realPath = require.resolve(originPath);
             let file = require(originPath);
             if (file[env]) {
                 file = file[env];
             }
             this.set(key, file);
-        } else if (fs.existsSync(presentPath)) {
-            realPath = presentPath;
+        } else if (self._checkCanRequire(presentPath)) {
+            realPath = require.resolve(presentPath);
             let pfile = require(presentPath);
             this.set(key, pfile);
         } else {
@@ -411,13 +420,28 @@ export class Application {
         }
 
         if (!!realPath && !!reload) {
-            fs.watch(realPath, function (event, filename) {
+            const watcher = fs.watch(realPath, function (event, filename) {
                 if (event === 'change') {
-                    delete require.cache[require.resolve(realPath)];
-                    self.loadConfigBaseApp(key, val);
+                    self.clearRequireCache(require.resolve(realPath));
+                    watcher.close();
+                    self.loadConfigBaseApp(key, val, reload);
+
                 }
             });
         }
+    }
+
+    clearRequireCache(path: string) {
+        const moduleObj = require.cache[path];
+        if (!moduleObj) {
+            logger.warn('can not find module of truepath', path);
+            return;
+        }
+        if (moduleObj.parent) {
+            //    console.log('has parent ',moduleObj.parent);
+            moduleObj.parent.children.splice(moduleObj.parent.children.indexOf(moduleObj), 1);
+        }
+        delete require.cache[path];
     }
 
     /**
@@ -485,7 +509,7 @@ export class Application {
      * @param  {Function} cb callback function
      * @memberOf Application
      */
-    start(cb ?: (err ?: Error , result ?: void) => void) {
+    start(cb ?: (err ?: Error, result ?: void) => void) {
         this.startTime = Date.now();
         if (this.state > STATE_INITED) {
             utils.invokeCallback(cb, new Error('application has already start.'));
@@ -589,7 +613,7 @@ export class Application {
 
         appUtil.optLifecycles(self.usedPlugins, Constants.LIFECYCLE.BEFORE_SHUTDOWN, self, function (err) {
             if (err) {
-                console.error(`throw err when beforeShutdown ` , err.stack);
+                console.error(`throw err when beforeShutdown `, err.stack);
             } else {
                 if (!!fun) {
                     utils.invokeCallback(fun, self, shutDown, cancelShutDownTimer);
@@ -636,11 +660,11 @@ export class Application {
     set(setting: Constants.RESERVED.ENV, val: string, attach?: boolean): Application;
     set(setting: Constants.RESERVED.GLOBAL_ERROR_HANDLER, val: ResponseErrorHandler, attach?: boolean): Application;
     set(setting: Constants.RESERVED.ERROR_HANDLER, val: ResponseErrorHandler, attach?: boolean): Application;
-    set(setting: Constants.KEYWORDS.MODULE, val: {[key: string]: ModuleRecord}, attach?: boolean): Application;
+    set(setting: Constants.KEYWORDS.MODULE, val: { [key: string]: ModuleRecord }, attach?: boolean): Application;
     set(setting: string, val: string | any, attach?: boolean): Application;
     set(setting: string, val: string | any, attach?: boolean): Application {
         this.settings[setting] = val;
-        if(attach) {
+        if (attach) {
             (this as any)[setting] = val;
         }
         return this;
@@ -670,7 +694,7 @@ export class Application {
     get(setting: Constants.RESERVED.ENV): string;
     get(setting: Constants.RESERVED.GLOBAL_ERROR_HANDLER): ResponseErrorHandler;
     get(setting: Constants.RESERVED.ERROR_HANDLER): ResponseErrorHandler;
-    get(setting: Constants.KEYWORDS.MODULE): {[key: string]: ModuleRecord};
+    get(setting: Constants.KEYWORDS.MODULE): { [key: string]: ModuleRecord };
     get(setting: string): string | any;
     get(setting: string): string | any {
         return this.settings[setting];
@@ -797,7 +821,7 @@ export class Application {
             module = moduleId;
             if (module) {
                 moduleId = ((module as IModuleFactory).moduleId);
-                if(!moduleId)
+                if (!moduleId)
                     moduleId = (module as IModule).constructor.name;
             }
         }
@@ -829,13 +853,13 @@ export class Application {
             throw new Error(`pluin[${plugin.name} was used already!]`);
         }
 
-        if(plugin.components) {
-            for(let componentCtor of plugin.components) {
+        if (plugin.components) {
+            for (let componentCtor of plugin.components) {
                 this.load(componentCtor, opts);
             }
         }
-        if(plugin.events) {
-            for(let eventCtor of plugin.events) {
+        if (plugin.events) {
+            for (let eventCtor of plugin.events) {
                 this.loadEvent(eventCtor, opts);
             }
         }
@@ -1075,7 +1099,7 @@ export class Application {
      * @param  {Object} server id map
      * @memberOf Application
      */
-    replaceServers(servers: {[serverId: string]: ServerInfo}) {
+    replaceServers(servers: { [serverId: string]: ServerInfo }) {
         if (!servers) {
             return;
         }
@@ -1153,16 +1177,17 @@ export class Application {
     loadEvent(Event: ApplicationEventContructor, opts: any) {
         let eventInstance = new Event(opts);
 
-        for(let evt in AppEvents) {
+        for (let evt in AppEvents) {
             let name = AppEvents[evt];
             let method = (eventInstance as any)[name];
-            if(method) {
+            if (method) {
                 this.event.on(name, method.bind(eventInstance));
             }
         }
     }
 
 }
+
 let replaceServer = function (slist: ServerInfo[], serverInfo: ServerInfo) {
     for (let i = 0, l = slist.length; i < l; i++) {
         if (slist[i].id === serverInfo.id) {
@@ -1200,7 +1225,7 @@ let contains = function (str: string, settings: string) {
     return false;
 };
 
-let addFilter = function<T>(app: Application, type: string, filter: T) {
+let addFilter = function <T>(app: Application, type: string, filter: T) {
     let filters = app.get(type);
     if (!filters) {
         filters = [];

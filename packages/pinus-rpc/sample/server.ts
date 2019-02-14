@@ -20,7 +20,9 @@ function runServer(port: number) {
 
     let server = createServer({paths: paths, port: port, rpcDebugLog: true,
         rpcLogger: logger,
-        acceptorFactory: createTcpAcceptor
+        acceptorFactory: createTcpAcceptor,
+        bufferMsg: true,
+        interval: 2000
     });
     server.start();
     console.log('rpc server started.' + port);

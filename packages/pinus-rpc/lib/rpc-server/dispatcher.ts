@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import * as utils from '../util/utils';
 import * as util from 'util';
-import {Tracer} from '../util/tracer';
+import { Tracer } from '../util/tracer';
 import { ProcessMsgCallBack } from './acceptor';
 
 export interface MsgPkg {
@@ -12,18 +12,19 @@ export interface MsgPkg {
 }
 
 export type RemoteMethod = (...args: any[]) => Promise<any>;
-export type Remoter = {[method: string]: RemoteMethod};
-export type Remoters = {[service: string]: Remoter};
-export type Services = {[namespace: string]: Remoters};
+export type Remoter = { [method: string]: RemoteMethod };
+export type Remoters = { [service: string]: Remoter };
+export type Services = { [namespace: string]: Remoters };
 
 export class Dispatcher extends EventEmitter {
     services: Services;
+
     constructor(services: Services) {
         super();
         let self = this;
         this.on('reload', function (services) {
-            for(let namespace in services) {
-                for(let service in services[namespace]) {
+            for (let namespace in services) {
+                for (let service in services[namespace]) {
                     self.services[namespace][service] = services[namespace][service];
                 }
             }
@@ -44,29 +45,33 @@ export class Dispatcher extends EventEmitter {
         let namespace = this.services[msg.namespace];
         if (!namespace) {
             tracer && tracer.error('server', __filename, 'route', 'no such namespace:' + msg.namespace);
-            cb(new Error('no such namespace:' + msg.namespace));
+            cb ? cb(new Error('no such namespace:' + msg.namespace)) : null;
             return;
         }
 
         let service = namespace[msg.service];
         if (!service) {
             tracer && tracer.error('server', __filename, 'route', 'no such service:' + msg.service);
-            cb(new Error('no such service:' + msg.service));
+            cb ? cb(new Error('no such service:' + msg.service)) : null;
             return;
         }
 
         let method = service[msg.method];
         if (!method) {
             tracer && tracer.error('server', __filename, 'route', 'no such method:' + msg.method);
-            cb(new Error('no such method:' + msg.method));
+            cb ? cb(new Error('no such method:' + msg.method)) : null;
             return;
         }
 
         let args = msg.args;
         let promise = method.apply(service, args);
-        if (promise === undefined || !promise || !promise.then) {
-            tracer && tracer.error('server', __filename, 'route', 'not async method:' + msg.method);
-            cb(new Error('not async method:' + msg.method));
+        if (!cb) {
+            return;
+        }
+        if (!promise || !promise.then) {
+            // tracer && tracer.error('server', __filename, 'route', 'not async method:' + msg.method);
+            // cb ? cb(new Error('not async method:' + msg.method)) : null;
+            cb(null, promise);
             return;
         }
         promise.then(function (value: string) {

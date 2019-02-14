@@ -32,6 +32,8 @@ export * from './components/backendSession';
 export * from './components/channel';
 
 
+export {RestartNotifyModule} from './modules/restartNotifyModule';
+
 export * from './server/server';
 export * from './monitor/monitor';
 export * from './pushSchedulers/direct';

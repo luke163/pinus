@@ -1,4 +1,3 @@
-
 /**
  * [encode an uInt32, return a array of bytes]
  * @param  {[integer]} num
@@ -7,7 +6,7 @@
 export function encodeUInt32(num: any) {
     let n = parseInt(num);
     if (isNaN(n) || n < 0) {
-        console.warn('encodeUInt32 error n:', n, 'origin:', num);
+        console.error('encodeUInt32 error n error:', n, 'origin:', num);
         return null;
     }
 
@@ -34,7 +33,7 @@ export function encodeUInt32(num: any) {
 export function encodeSInt32(num: any) {
     let n = parseInt(num);
     if (isNaN(n)) {
-        console.warn('encodeSInt32 error n:', n, 'origin:', num);
+        console.error('encodeSInt32 error n error:', n, 'origin:', num);
         return null;
     }
     n = n < 0 ? (Math.abs(n) * 2 - 1) : n * 2;
@@ -42,7 +41,7 @@ export function encodeSInt32(num: any) {
     return encodeUInt32(n);
 }
 
-export function decodeUInt32 (bytes: Array<any>) {
+export function decodeUInt32(bytes: Array<any>) {
     let n = 0;
 
     for (let i = 0; i < bytes.length; i++) {

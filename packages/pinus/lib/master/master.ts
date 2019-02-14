@@ -84,24 +84,6 @@ export class MasterServer {
             let server = self.app.getServerById(id);
             let stopFlags = self.app.get(Constants.RESERVED.STOP_SERVERS) || [];
             if (!!server && (server[Constants.RESERVED.AUTO_RESTART] === true || server[Constants.RESERVED.RESTART_FORCE] === true) && stopFlags.indexOf(id) < 0) {
-                let setTimer = function (time: number) {
-                    pingTimer = setTimeout(function () {
-                        utils.ping(server.host, function (flag) {
-                            if (flag) {
-                                handle();
-                            } else {
-                                count++;
-                                if (count > 3) {
-                                    time = Constants.TIME.TIME_WAIT_MAX_PING;
-                                } else {
-                                    time = Constants.TIME.TIME_WAIT_PING * count;
-                                }
-                                setTimer(time);
-                            }
-                        });
-                    }, time);
-                };
-                setTimer(time);
                 let handle = function () {
                     clearTimeout(pingTimer);
                     utils.checkPort(server, function (status) {
@@ -121,6 +103,24 @@ export class MasterServer {
                         }, Constants.TIME.TIME_WAIT_STOP);
                     });
                 };
+                let setTimer = function (time: number) {
+                    pingTimer = setTimeout(function () {
+                        utils.ping(server.host, function (flag) {
+                            if (flag) {
+                                handle();
+                            } else {
+                                count++;
+                                if (count > 3) {
+                                    time = Constants.TIME.TIME_WAIT_MAX_PING;
+                                } else {
+                                    time = Constants.TIME.TIME_WAIT_PING * count;
+                                }
+                                setTimer(time);
+                            }
+                        });
+                    }, time);
+                };
+                setTimer(time);
             }
         });
 

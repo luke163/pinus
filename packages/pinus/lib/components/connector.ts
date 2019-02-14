@@ -58,7 +58,7 @@ export class ConnectorComponent implements IComponent {
     blacklistFun: BlackListFunction;
     connection: ConnectionService;
 
-    keys: {[id: number]: RsaKey} = {};
+    keys: { [id: number]: RsaKey } = {};
     blacklist: string[] = [];
     server: ServerComponent;
     session: SessionComponent;
@@ -86,6 +86,7 @@ export class ConnectorComponent implements IComponent {
         this.server = null;
         this.session = null;
     }
+
     name = '__connector__';
 
     start(cb: () => void) {
@@ -128,9 +129,9 @@ export class ConnectorComponent implements IComponent {
 
     send(reqId: number, route: string, msg: any, recvs: SID[], opts: ScheduleOptions, cb: (err?: Error, resp ?: any) => void) {
         logger.debug('[%s] send message reqId: %s, route: %s, msg: %j, receivers: %j, opts: %j', this.app.serverId, reqId, route, msg, recvs, opts);
-        if (this.useAsyncCoder) {
-            return this.sendAsync(reqId, route, msg, recvs, opts, cb);
-        }
+        // if (this.useAsyncCoder) {
+        //     return this.sendAsync(reqId, route, msg, recvs, opts, cb);
+        // }
 
         let emsg = msg;
         if (this.encode) {
@@ -188,7 +189,7 @@ export class ConnectorComponent implements IComponent {
         this.app.components.__pushScheduler__.schedule(reqId, route, emsg, recvs, opts, cb);
     }
 
-    setPubKey(id: number, key: {rsa_n: string , rsa_e: string}) {
+    setPubKey(id: number, key: { rsa_n: string, rsa_e: string }) {
         let pubKey = new rsa.Key();
         pubKey.n = new rsa.BigInteger(key.rsa_n, 16);
         pubKey.e = key.rsa_e;
@@ -263,7 +264,7 @@ export class ConnectorComponent implements IComponent {
         let session = this.getSession(socket);
         let closed = false;
 
-        socket.on('disconnect',  () => {
+        socket.on('disconnect', () => {
             if (closed) {
                 return;
             }
@@ -273,7 +274,7 @@ export class ConnectorComponent implements IComponent {
             }
         });
 
-        socket.on('error',  () => {
+        socket.on('error', () => {
             if (closed) {
                 return;
             }
@@ -284,11 +285,11 @@ export class ConnectorComponent implements IComponent {
         });
 
         // new message
-        socket.on('message',  (msg) => {
+        socket.on('message', (msg) => {
             let dmsg = msg;
-            if (this.useAsyncCoder) {
-                return this.handleMessageAsync(msg, session, socket);
-            }
+            // if (this.useAsyncCoder) {
+            //     return this.handleMessageAsync(msg, session, socket);
+            // }
 
             if (this.decode) {
                 dmsg = this.decode(msg);
@@ -378,8 +379,8 @@ export class ConnectorComponent implements IComponent {
         socket.on('disconnect', session.closed.bind(session));
         socket.on('error', session.closed.bind(session));
         session.on('closed', this.onSessionClose.bind(this, app));
-        session.on('bind',  (uid) => {
-            logger.debug('session[%d] on [%s] bind with uid: %s', socket.id, this.app.serverId, uid);
+        session.on('bind', (uid) => {
+            logger.debug('session on [%s] bind with uid: %s', this.app.serverId, uid);
             // update connection statistics if necessary
             if (this.connection) {
                 this.connection.addLoginedUser(uid, {
@@ -391,7 +392,7 @@ export class ConnectorComponent implements IComponent {
             this.app.event.emit(events.BIND_SESSION, session);
         });
 
-        session.on('unbind',  (uid) => {
+        session.on('unbind', (uid) => {
             if (this.connection) {
                 this.connection.removeLoginedUser(uid);
             }
@@ -413,7 +414,7 @@ export class ConnectorComponent implements IComponent {
             logger.error('invalid route string. route : %j', msg.route);
             return;
         }
-        this.server.globalHandle(msg, session.toFrontendSession(),  (err, resp) => {
+        this.server.globalHandle(msg, session.toFrontendSession(), (err, resp) => {
             if (resp && !msg.id) {
                 logger.warn('try to response to a notify: %j', msg.route);
                 return;
@@ -489,6 +490,7 @@ export class ConnectorComponent implements IComponent {
     }
 
 }
+
 let getConnector = function (app: Application, opts: any) {
     let connector = opts.connector;
     if (!connector) {

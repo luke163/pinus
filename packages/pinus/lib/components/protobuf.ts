@@ -9,15 +9,15 @@ import { IComponent } from '../interfaces/IComponent';
 let logger = getLogger('pinus', path.basename(__filename));
 
 export interface ProtobufComponentOptions {
-    serverProtos ?: string;
-    clientProtos ?: string;
+    serverProtos?: string;
+    clientProtos?: string;
 }
 
 
 export class ProtobufComponent implements IComponent {
     app: Application;
 
-    watchers: {[key: string]: fs.FSWatcher} = {};
+    watchers: { [key: string]: fs.FSWatcher } = {};
     serverProtos: {
         [key: string]: any;
     } = {};
@@ -31,6 +31,15 @@ export class ProtobufComponent implements IComponent {
     protobuf: Protobuf;
     name = '__protobuf__';
 
+    _canRequire(path: string): boolean {
+        try {
+            require.resolve(path);
+        } catch (err) {
+            return false;
+        }
+        return true;
+    }
+
     constructor(app: Application, opts ?: ProtobufComponentOptions) {
         this.app = app;
         opts = opts || {};
@@ -41,13 +50,13 @@ export class ProtobufComponent implements IComponent {
         let originClientPath = path.join(app.getBase(), Constants.FILEPATH.CLIENT_PROTOS);
         let presentClientPath = path.join(Constants.FILEPATH.CONFIG_DIR, env, path.basename(Constants.FILEPATH.CLIENT_PROTOS));
 
-        this.serverProtosPath = opts.serverProtos || (fs.existsSync(originServerPath) ? Constants.FILEPATH.SERVER_PROTOS : presentServerPath);
-        this.clientProtosPath = opts.clientProtos || (fs.existsSync(originClientPath) ? Constants.FILEPATH.CLIENT_PROTOS : presentClientPath);
+        this.serverProtosPath = opts.serverProtos || (this._canRequire(originServerPath) ? Constants.FILEPATH.SERVER_PROTOS : presentServerPath);
+        this.clientProtosPath = opts.clientProtos || (this._canRequire(originClientPath) ? Constants.FILEPATH.CLIENT_PROTOS : presentClientPath);
 
         this.setProtos(Constants.RESERVED.SERVER, path.join(app.getBase(), this.serverProtosPath));
         this.setProtos(Constants.RESERVED.CLIENT, path.join(app.getBase(), this.clientProtosPath));
 
-        this.protobuf = new Protobuf({ encoderProtos: this.serverProtos, decoderProtos: this.clientProtos });
+        this.protobuf = new Protobuf({encoderProtos: this.serverProtos, decoderProtos: this.clientProtos});
     }
 
 
@@ -76,7 +85,7 @@ export class ProtobufComponent implements IComponent {
     }
 
     setProtos(type: string, path: string) {
-        if (!fs.existsSync(path)) {
+        if (!this._canRequire(path)) {
             return;
         }
 
@@ -92,11 +101,25 @@ export class ProtobufComponent implements IComponent {
         this.version = crypto.createHash('md5').update(protoStr).digest('base64');
 
         // Watch file
-        let watcher = fs.watch(path, this.onUpdate.bind(this, type, path));
+        const truePath = require.resolve(path);
+        let watcher = fs.watch(truePath, this.onUpdate.bind(this, type, truePath));
         if (this.watchers[type]) {
             this.watchers[type].close();
         }
         this.watchers[type] = watcher;
+    }
+
+    clearRequireCache(path: string) {
+        const moduleObj = require.cache[path];
+        if (!moduleObj) {
+            logger.warn('can not find module of truepath', path);
+            return;
+        }
+        if (moduleObj.parent) {
+            //    console.log('has parent ',moduleObj.parent);
+            moduleObj.parent.children.splice(moduleObj.parent.children.indexOf(moduleObj), 1);
+        }
+        delete require.cache[path];
     }
 
     onUpdate(type: string, path: string, event: string) {
@@ -105,25 +128,26 @@ export class ProtobufComponent implements IComponent {
         }
 
         let self = this;
-        fs.readFile(path, 'utf8',  (err, data) => {
-            try {
-                let protos = Protobuf.parse(JSON.parse(data));
-                if (type === Constants.RESERVED.SERVER) {
-                    this.protobuf.setEncoderProtos(protos);
-                    self.serverProtos = protos;
-                } else {
-                    this.protobuf.setDecoderProtos(protos);
-                    self.clientProtos = protos;
-                }
-
-                let protoStr = JSON.stringify(self.clientProtos) + JSON.stringify(self.serverProtos);
-                self.version = crypto.createHash('md5').update(protoStr).digest('base64');
-                logger.info('change proto file , type : %j, path : %j, version : %j', type, path, self.version);
-            } catch (e) {
-                logger.warn('change proto file error! path : %j', path);
-                logger.warn(e);
+        this.clearRequireCache(path);
+        try {
+            let protos = Protobuf.parse(require(path));
+            if (type === Constants.RESERVED.SERVER) {
+                this.protobuf.setEncoderProtos(protos);
+                self.serverProtos = protos;
+            } else {
+                this.protobuf.setDecoderProtos(protos);
+                self.clientProtos = protos;
             }
-        });
+
+            let protoStr = JSON.stringify(self.clientProtos) + JSON.stringify(self.serverProtos);
+            self.version = crypto.createHash('md5').update(protoStr).digest('base64');
+            logger.info('change proto file , type : %j, path : %j, version : %j', type, path, self.version);
+            this.watchers[type].close();
+            this.watchers[type] = fs.watch(path, this.onUpdate.bind(this, type, path));
+        } catch (e) {
+            logger.warn('change proto file error! path : %j', path);
+            logger.warn(e);
+        }
     }
 
     stop(force: boolean, cb: () => void) {

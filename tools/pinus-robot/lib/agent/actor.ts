@@ -24,14 +24,15 @@ export class Actor extends EventEmitter implements IActor {
   constructor(conf: AgentCfg, aid: number) {
     super();
     this.id = aid;
-    this.script = conf.script;
     this.params = conf.params;
-    if (!this.script) {
+    if (conf.script) {
+      this.script = conf.script;
+    } else {
      if(path.isAbsolute(conf.scriptFile)) {
-      this.script = conf.scriptFile;
+      this.script = `require("${conf.scriptFile}").default(actor);`;
      }
      else {
-      this.script = `${path.join(process.cwd() , conf.scriptFile)}`;
+      this.script = `require("${path.join(process.cwd() , conf.scriptFile)}").default(actor);`;
      }
     }
     console.log('runScript ' , this.script);

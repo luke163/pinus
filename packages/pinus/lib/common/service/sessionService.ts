@@ -13,7 +13,9 @@ let EXPORTED_SESSION_FIELDS = ['id', 'frontendId', 'uid', 'settings'];
 let ST_INITED = 0;
 let ST_CLOSED = 1;
 
-export interface SessionServiceOptions {singleSession ?: Session; }
+export interface SessionServiceOptions {
+    singleSession?: Session;
+}
 
 /**
  * Session service maintains the internal session for each client connection.
@@ -63,7 +65,7 @@ export class SessionService {
      * @memberOf SessionService
      * @api private
      */
-    bind(sid: SID, uid: UID, cb: (err: Error | null , result ?: void) => void) {
+    bind(sid: SID, uid: UID, cb: (err: Error | null, result ?: void) => void) {
         let session = this.sessions[sid];
 
         if (!session) {
@@ -122,7 +124,7 @@ export class SessionService {
      * @memberOf SessionService
      * @api private
      */
-    unbind(sid: SID, uid: UID, cb: (err ?: Error , result ?: void) => void) {
+    unbind(sid: SID, uid: UID, cb: (err ?: Error, result ?: void) => void) {
         let session = this.sessions[sid];
 
         if (!session) {
@@ -222,7 +224,7 @@ export class SessionService {
      *
      * @api private
      */
-    import(sid: SID, key: string, value: string, cb: (err ?: Error , result ?: void) => void) {
+    import(sid: SID, key: string, value: string, cb: (err ?: Error, result ?: void) => void) {
         let session = this.sessions[sid];
         if (!session) {
             utils.invokeCallback(cb, new Error('session does not exist, sid: ' + sid));
@@ -238,7 +240,7 @@ export class SessionService {
      * @memberOf SessionService
      * @api private
      */
-    importAll(sid: SID, settings: {[key: string]: any}, cb: (err ?: Error , result ?: void) => void) {
+    importAll(sid: SID, settings: { [key: string]: any }, cb: (err ?: Error, result ?: void) => void) {
         let session = this.sessions[sid];
         if (!session) {
             utils.invokeCallback(cb, new Error('session does not exist, sid: ' + sid));
@@ -259,7 +261,7 @@ export class SessionService {
      *
      * @memberOf SessionService
      */
-    kick(uid: UID, reason ?: string, cb ?: (err ?: Error , result ?: void) => void) {
+    kick(uid: UID, reason ?: string, cb ?: (err ?: Error, result ?: void) => void) {
         // compatible for old kick(uid, cb);
         if (typeof reason === 'function') {
             cb = reason;
@@ -297,7 +299,7 @@ export class SessionService {
      *
      * @memberOf SessionService
      */
-    kickBySessionId(sid: SID, reason ?: string, cb ?: (err ?: Error , result ?: void) => void) {
+    kickBySessionId(sid: SID, reason ?: string, cb ?: (err ?: Error, result ?: void) => void) {
         if (typeof reason === 'function') {
             cb = reason;
             reason = 'kick';
@@ -412,7 +414,7 @@ export class SessionService {
      *
      */
     getSessionsCount() {
-        return utils.size(this.sessions);
+        return Object.keys(this.sessions).length;
     }
 
 
@@ -423,22 +425,23 @@ export class SessionService {
     aimport: (sid: SID, key: string, value: any) => Promise<void> = utils.promisify(this.import.bind(this));
     aimportAll: (sid: SID, settings: any) => Promise<void> = utils.promisify(this.importAll.bind(this));
 }
+
 /**
  * Send message to the client that associated with the session.
  *
  * @api private
  */
-let send = function(service: SessionService, session: Session, msg: any) {
-  session.send(msg);
+let send = function (service: SessionService, session: Session, msg: any) {
+    session.send(msg);
 
-  return true;
+    return true;
 };
 
 export interface ISession {
     id: number;
     uid: string;
     frontendId: string;
-    settings: {[key: string]: any};
+    settings: { [key: string]: any };
 }
 
 /**
@@ -454,7 +457,7 @@ export class Session extends EventEmitter implements ISession {
     id: SID;
     frontendId: FRONTENDID;
     uid: UID;
-    settings: {[key: string]: any};
+    settings: { [key: string]: any };
 
     __socket__: ISocket;
     private __sessionService__: SessionService;
@@ -511,11 +514,11 @@ export class Session extends EventEmitter implements ISession {
      * @param {Object} value session value
      * @api public
      */
-    set(values: {[key: string]: any}): void;
+    set(values: { [key: string]: any }): void;
     set(key: string, value: any): void;
-    set(keyOrValues: string | {[key: string]: any}, value ?: any) {
+    set(keyOrValues: string | { [key: string]: any }, value ?: any) {
         if (utils.isObject(keyOrValues)) {
-            let values = keyOrValues as {[key: string]: any};
+            let values = keyOrValues as { [key: string]: any };
             for (let i in values) {
                 this.settings[i] = values[i];
             }
@@ -572,7 +575,7 @@ export class Session extends EventEmitter implements ISession {
         if (this.__state__ === ST_CLOSED) {
             return;
         }
-        logger.debug('session on [%s] is closed with session id: %s reason:%s', this.frontendId, this.id,reason);
+        logger.debug('session on [%s] is closed with session id: %s,uid:%s,reason:%j', this.frontendId, this.id, this.uid, reason);
         this.__state__ = ST_CLOSED;
         this.__sessionService__.remove(this.id);
         this.emit('closed', this.toFrontendSession(), reason);
@@ -585,6 +588,7 @@ export class Session extends EventEmitter implements ISession {
             self.__socket__.disconnect();
         });
     }
+
     /**
      * 是否在线
      */
@@ -620,7 +624,7 @@ export class FrontendSession extends EventEmitter implements ISession {
     }
 
 
-    bind(uid: UID, cb: (err ?: Error , result ?: void) => void) {
+    bind(uid: UID, cb: (err ?: Error, result ?: void) => void) {
         let self = this;
         this.__sessionService__.bind(this.id, uid, function (err) {
             if (!err) {
@@ -630,7 +634,7 @@ export class FrontendSession extends EventEmitter implements ISession {
         });
     }
 
-    unbind(uid: UID, cb: (err ?: Error , result ?: void) => void) {
+    unbind(uid: UID, cb: (err ?: Error, result ?: void) => void) {
         let self = this;
         this.__sessionService__.unbind(this.id, uid, function (err) {
             if (!err) {
@@ -648,11 +652,11 @@ export class FrontendSession extends EventEmitter implements ISession {
         return this.settings[key];
     }
 
-    push(key: string, cb: (err ?: Error , result ?: void) => void) {
+    push(key: string, cb: (err ?: Error, result ?: void) => void) {
         this.__sessionService__.import(this.id, key, this.get(key), cb);
     }
 
-    pushAll(cb: (err ?: Error , result ?: void) => void) {
+    pushAll(cb: (err ?: Error, result ?: void) => void) {
         this.__sessionService__.importAll(this.id, this.settings, cb);
     }
 
@@ -661,11 +665,27 @@ export class FrontendSession extends EventEmitter implements ISession {
         return super.on(event, listener);
     }
 
+    abind(uid: string,) {
+        return new Promise((resolve, reject) => this.bind(uid, (err, ret) => err ? reject(err) : resolve(ret as any)));
+    }
 
-    abind = utils.promisify(this.bind.bind(this));
-    aunbind = utils.promisify(this.unbind.bind(this));
-    apush = utils.promisify(this.push.bind(this));
-    apushAll = utils.promisify(this.pushAll.bind(this));
+    aunbind(uid: string,) {
+        return new Promise((resolve, reject) => this.unbind(uid, (err, ret) => err ? reject(err) : resolve(ret as any)));
+    }
+
+    apush(key: string) {
+        return new Promise((resolve, reject) => this.push(key, (err, ret) => err ? reject(err) : resolve(ret as any)));
+    }
+
+    apushAll() {
+        return new Promise((resolve, reject) => this.pushAll((err, ret) => err ? reject(err) : resolve(ret as any)));
+    }
+
+
+    // abind = utils.promisify(this.bind.bind(this));
+    // aunbind = utils.promisify(this.unbind.bind(this));
+    // apush = utils.promisify(this.push.bind(this));
+    // apushAll = utils.promisify(this.pushAll.bind(this));
 
     /**
      * Export the key/values for serialization.
@@ -677,12 +697,14 @@ export class FrontendSession extends EventEmitter implements ISession {
         clone(this, res, EXPORTED_SESSION_FIELDS);
         return res;
     }
+
     /**
      * 是否在线
      */
     get isOnline(): boolean {
         return this.__session__.isOnline;
     }
+
     /**
      * 获取客户端的地址
      */
