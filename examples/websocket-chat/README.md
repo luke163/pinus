@@ -27,7 +27,7 @@ launch.js
         {
             "type": "node",
             "request": "attach",
-            "name": "¸½µ½connector",
+            "name": "é™„åˆ°connector",
             "address": "127.0.0.1",
             "port": 10001,
             "localRoot": "${workspaceFolder}/game-server",
@@ -36,7 +36,7 @@ launch.js
         {
             "type": "node",
             "request": "attach",
-            "name": "¸½µ½gate",
+            "name": "é™„åˆ°gate",
             "address": "127.0.0.1",
             "port": 10003,
             "localRoot": "${workspaceFolder}/game-server/dist",
@@ -45,7 +45,7 @@ launch.js
         {
             "type": "node",
             "request": "attach",
-            "name": "¸½µ½chat",
+            "name": "é™„åˆ°chat",
             "address": "127.0.0.1",
             "port": 10002,
             "localRoot": "${workspaceFolder}/game-server/dist",
